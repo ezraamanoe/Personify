@@ -7,7 +7,7 @@ import Navbar from '../components/Navbar';
 const Home = ({ theme }) => {
   const handleSpotifyAuth = async () => {
     try {
-        window.location.href = "http://personify-nu.vercel.app/login";
+        window.location.href = "http://personify-ai.onrender.com/login";
     } catch (error) {
         console.error("Error during authentication:", error);
     }

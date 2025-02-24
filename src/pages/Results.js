@@ -111,7 +111,7 @@ const Results = ({ theme }) => {
   useEffect(() => {
     const fetchCritique = async () => {
       try {
-        const response = await fetch('http://personify-nu.vercel.app/get-critique');
+        const response = await fetch('http://personify-ai.onrender.com/get-critique');
         const data = await response.json();
         setCritique(data.critique);
       } catch (error) {
@@ -125,7 +125,7 @@ const Results = ({ theme }) => {
   }, []);
 
   const downloadImage = () => {
-    fetch('http://personify-nu.vercel.app/get-image')
+    fetch('http://personify-ai.onrender.com/get-image')
       .then((response) => response.blob())
       .then((blob) => {
         const link = document.createElement("a");

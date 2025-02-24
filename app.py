@@ -12,12 +12,12 @@ load_dotenv()
 
 app = Flask(__name__, static_folder='build/static', template_folder='build')
 app.secret_key = os.urandom(24)
-CORS(app, origins="https://personify-nu.vercel.app")
+CORS(app, origins="https://personify-ai.onrender.com")
 
 # Spotify credentials from .env file
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
-SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "http://personify-nu.vercel.app/callback")
+SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "http://personify-ai.onrender.com/callback")
 
 # Spotify Authentication URL
 @app.route('/login')
@@ -67,7 +67,7 @@ def callback():
             session['tracks'] = tracks  
 
             # Redirect to results immediately
-            return redirect("http://personify-nu.vercel.app/results")
+            return redirect("http://personify-ai.onrender.com/results")
 
     return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
 
