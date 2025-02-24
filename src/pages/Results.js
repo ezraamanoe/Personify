@@ -92,26 +92,19 @@ const Results = ({ theme }) => {
   const intervalRef = useRef(null);
   const isMounted = useRef(true);
 
-  const checkCritiqueReady = async () => {
+  const checkCritiqueReady = useCallback(async () => {
     try {
       const response = await fetch('https://personify-ai.onrender.com/critique-status', {
         credentials: 'include'
       });
-      
-      if (!response.ok) {
-        if (response.status === 202) return false;
-        throw new Error('Status check failed');
-      }
-      return true;
+      return response.ok;
     } catch (err) {
-      if (isMounted.current) setError('Failed to check status');
       return false;
     }
-  };
+  }, []);
 
   const fetchCritique = useCallback(async () => {
     try {
-      // Poll until critique is ready
       let isReady = await checkCritiqueReady();
       while (!isReady && isMounted.current) {
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -136,9 +129,9 @@ const Results = ({ theme }) => {
     } finally {
       if (isMounted.current) setLoading(false);
     }
-  });
+  }, [checkCritiqueReady]);
 
-  const downloadImage = async () => {
+  const downloadImage = useCallback(async () => {
     try {
       setDownloading(true);
       const response = await fetch('https://personify-ai.onrender.com/get-image', {
@@ -159,7 +152,7 @@ const Results = ({ theme }) => {
     } finally {
       setDownloading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     isMounted.current = true;
