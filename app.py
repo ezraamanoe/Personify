@@ -74,12 +74,11 @@ def callback():
         # Generate and store immediately
         critique = generate_track_critique(tracks)
         
-        session.update({
-            "tracks": tracks,
-            "critique": critique
-        })
+        session['tracks'] = tracks
+        session['critique'] = critique
+        session.modified = True
         
-        return redirect(f"{SPOTIFY_REDIRECT_URI}/results")
+        return redirect("https://personify-ai.onrender.com/results")
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -108,6 +107,7 @@ def get_critique():
     if "critique" not in session:
         return jsonify({"error": "No critique available"}), 404
     return jsonify({"critique": session["critique"]})
+
 @app.route('/get-image')
 def get_image():
     critique = session.get('critique')
