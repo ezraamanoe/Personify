@@ -1,5 +1,5 @@
 import { CssBaseline, GeistProvider, Card, Button, Divider, Select, Drawer, Spinner, Note } from '@geist-ui/core';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Typewriter } from 'react-simple-typewriter';
 import { Sun, Moon, Github, Linkedin, Menu, Download } from "@geist-ui/icons";
 import '../App.css';
@@ -109,7 +109,7 @@ const Results = ({ theme }) => {
     }
   };
 
-  const fetchCritique = async () => {
+  const fetchCritique = useCallback(async () => {
     try {
       // Poll until critique is ready
       let isReady = await checkCritiqueReady();
@@ -136,7 +136,7 @@ const Results = ({ theme }) => {
     } finally {
       if (isMounted.current) setLoading(false);
     }
-  };
+  });
 
   const downloadImage = async () => {
     try {
