@@ -218,9 +218,7 @@ const Results = ({ theme }) => {
       <div className='results-container'>
         <Card>
           <Card.Content my={0}>
-            <Tooltip text={'Download your results'}>
-              <Button auto iconRight={<Download />} onClick={downloadImage} px={0.6}></Button>
-            </Tooltip>
+            <Button auto iconRight={<Download />} onClick={downloadImage} px={0.6}></Button>
           </Card.Content>
         <Divider h="1px" my={0} />
         <Card.Content>

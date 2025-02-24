@@ -1,6 +1,6 @@
 import React, { useEffect, useState} from 'react';
 import '../App.css';
-import { GeistProvider, CssBaseline, Button} from '@geist-ui/core';
+import { GeistProvider, CssBaseline, Button, Tooltip} from '@geist-ui/core';
 import { Typewriter } from 'react-simple-typewriter';
 import Navbar from '../components/Navbar';
 

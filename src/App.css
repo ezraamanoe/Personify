@@ -197,7 +197,6 @@ button, .geist-btn {
 }
 
 .results-container{
-  overflow-y: auto;
   align-self: center;
   padding-top: 20px;
   padding-bottom: 0;
