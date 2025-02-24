@@ -12,7 +12,7 @@ load_dotenv()
 
 app = Flask(__name__, static_folder='build/static', template_folder='build')
 app.secret_key = os.urandom(24)
-CORS(app, origins="https://personify-ai.onrender.com")
+CORS(app)
 
 # Spotify credentials from .env file
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
@@ -22,6 +22,7 @@ SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "http://personify-ai.on
 # Spotify Authentication URL
 @app.route('/login')
 def login():
+    session.clear()
     scope = "user-read-private user-read-email user-top-read"
     auth_url = (
         "https://accounts.spotify.com/authorize"
@@ -72,6 +73,7 @@ def callback():
     return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
 
 def generate_track_critique(tracks):
+    print("asking chatgpt")
     # Initialize OpenAI (or DeepSeek) client with the correct API key and endpoint
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1")
 
@@ -89,6 +91,7 @@ def generate_track_critique(tracks):
     )
 
     # Return the response from the AI (the critique)
+    print(response.choices[0].message.content)
     return response.choices[0].message.content
 
 @app.route('/get-critique')
