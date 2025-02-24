@@ -11,7 +11,7 @@ import textwrap
 load_dotenv()
 
 app = Flask(__name__, static_folder='build/static', template_folder='build')
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.urandom(24))
+app.secret_key = ("FLASK_SECRET_KEY", os.urandom(24))
 CORS(app, supports_credentials=True)
 
 app.config.update(
@@ -114,14 +114,7 @@ def get_critique():
     session['critique'] = critique
     return jsonify({"critique": critique})
 
-
-@app.route('/critique-status')
-def critique_status():
-    if 'critique' not in session:
-        return jsonify({"status": "processing"}), 202
-    return jsonify({"status": "ready"}), 200
 @app.route('/get-image')
-
 def get_image():
     critique = session.get('critique')
     formatted_critique = critique.replace("*", "").split("\n")
