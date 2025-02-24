@@ -14,6 +14,9 @@ app = Flask(__name__, static_folder='build/static', template_folder='build')
 app.secret_key = os.urandom(24)
 CORS(app)
 
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem"
+
 # Spotify credentials from .env file
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
@@ -66,6 +69,7 @@ def callback():
 
             # Store tracks in session instead of calling OpenAI now
             session['tracks'] = tracks  
+            session.modified = True  # Force session save
 
             # Redirect to results immediately
             return redirect("http://personify-ai.onrender.com/results")
