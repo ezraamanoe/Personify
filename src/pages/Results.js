@@ -105,7 +105,6 @@ const Results = ({ theme }) => {
   const [paragraphs, setParagraphs] = useState([]); // Processed paragraphs
   const [currentParaIndex, setCurrentParaIndex] = useState(0);
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
-  const [imageUrl, setImageUrl] = useState('');
   const intervalRef = useRef(null);
 
   // Fetch critique from API
@@ -124,24 +123,6 @@ const Results = ({ theme }) => {
     };
     fetchCritique();
   }, []);
-
-
-  useEffect(() => {
-    if (critique) {
-      fetch("http://personify-nu.vercel.app/get-image")
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.blob();  // Treat the response as a blob (image)
-        })
-        .then((blob) => {
-          imageUrl = URL.createObjectURL(blob); // Create object URL for image blob
-          setImageUrl(imageUrl); // Set image URL
-        })
-        .catch((error) => console.error("Error fetching image:", error));
-    }
-  }, [critique]);
 
   const downloadImage = () => {
     fetch('http://personify-nu.vercel.app/get-image')
