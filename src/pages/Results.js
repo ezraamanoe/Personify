@@ -169,7 +169,7 @@ const Results = ({ theme }) => {
       isMounted.current = false;
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+  }, [fetchCritique]);
 
   useEffect(() => {
     if (!loading && !error && critique) {
