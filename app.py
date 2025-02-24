@@ -75,9 +75,14 @@ def callback():
                 for track in top_tracks
             ]
 
-            # Store tracks in session instead of calling OpenAI now
-            session['tracks'] = tracks  
-            session.modified = True  # Force session save
+            critique = generate_track_critique(tracks)
+        
+            session.update({
+                "tracks": tracks,
+                "critique": critique,
+                "_fresh": True,
+                "_permanent": True
+            })
 
             # Redirect to results immediately
             return redirect("https://personify-ai.onrender.com/results")
@@ -85,6 +90,7 @@ def callback():
     return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
 
 def generate_track_critique(tracks):
+
     print("asking chatgpt")
     # Initialize OpenAI (or DeepSeek) client with the correct API key and endpoint
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1", timeout=30)
@@ -102,8 +108,6 @@ def generate_track_critique(tracks):
         ]
     )
 
-    # Return the response from the AI (the critique)
-    print(response.choices[0].message.content)
     return response.choices[0].message.content
 
 @app.route('/get-critique')
@@ -113,10 +117,7 @@ def get_critique():
     if not tracks:
         return jsonify({"critique": "No tracks available."})
 
-    # Call AI now
-    critique = generate_track_critique(tracks)
-    session['critique'] = critique
-    return jsonify({"critique": critique}), 200
+    return jsonify({"critique": session["critique"]})
 
 @app.route('/get-image')
 def get_image():
