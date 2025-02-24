@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
-import io
 
 # Load environment variables
 load_dotenv()
@@ -74,7 +73,7 @@ def callback():
 
 def generate_track_critique(tracks):
     # Initialize OpenAI (or DeepSeek) client with the correct API key and endpoint
-    client = OpenAI(api_key=os.getenv("OPNEAI_API_KEY"), base_url="https://openrouter.ai/api/v1")
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1")
 
     # Create a message to send to the model, you could use track names or further track details
     track_names = [f"{track['name']} - {track['artist']}" for track in tracks]
@@ -105,9 +104,9 @@ def get_critique():
     return jsonify({"critique": critique})
 
 @app.route('/get-image')
-def get_image(tracks):
+def get_image():
     critique = session.get('critique')
-    formatted_critique = critique.split("\n")
+    formatted_critique = critique.replace("*", "").split("\n")
     end_critique = formatted_critique[-1] # Get last element
     tracks = session.get('tracks')
     i = 1
@@ -124,20 +123,20 @@ def get_image(tracks):
     end_critique = textwrap.fill(str(end_critique), width = 40)
     
     # Load font
-    font = ImageFont.truetype("PPNeueMontrealMono-Medium.otf", 50)  # Use a font available on your system
-    fontSub = ImageFont.truetype("PPNeueMontrealMono-Medium.otf", 36)
+    font = ImageFont.truetype("PPNeueMontrealMono-Medium.otf", 70)  # Use a font available on your system
+    fontSub = ImageFont.truetype("PPNeueMontrealMono-Medium.otf", 40)
     
     # Draw text onto image
-    draw.text((50, 50), text="Personify", fill="white", font=font)
-    draw.text((50, 150), end_critique, fill="#0070f3", font=fontSub)
+    draw.text((50, 50), text="Personify AI", fill="white", font=font)
+    draw.text((50, 200), end_critique, fill="#0070f3", font=fontSub)
     
     lines = end_critique.split("\n")
     _, _, _, line_height = draw.textbbox((0, 0), "a", font=fontSub)  # Calculate height of Critique
     
     line_height *= len(lines)
-    draw.text((50, 250 + int(line_height)), text="Your top tracks:", fill="white", font=font)
+    draw.text((50, 350 + int(line_height)), text="Your top tracks:", fill="white", font=font)
     
-    x = 450  # Starting y-position
+    x = 550  # Starting y-position
     z = 0    # Tracks total height offset
     
     # Get height of a single line of text
@@ -152,11 +151,10 @@ def get_image(tracks):
         # Update total height offset
         z += line_height * len(track_lines) + 10
     
-    img_io = io.BytesIO()
-    img.save(img_io, 'PNG')
-    img_io.seek(0)
-
-    return send_file(img_io, mimetype='image/png')
+    image_path = os.path.join("build", "static", "images", "critique.png")
+    os.makedirs(os.path.dirname(image_path), exist_ok=True)
+    img.save(image_path, "PNG")
+    return send_file(image_path, as_attachment=True, download_name="critique.png")
 
 # Serve the React app
 @app.route('/')

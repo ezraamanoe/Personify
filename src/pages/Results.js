@@ -1,8 +1,7 @@
-import { CssBaseline, GeistProvider, Card, Button, Divider, Select, Drawer } from '@geist-ui/core';
+import { CssBaseline, GeistProvider, Card, Button, Divider, Select, Drawer, Tooltip } from '@geist-ui/core';
 import React, { useEffect, useState, useRef } from 'react';
 import { Typewriter } from 'react-simple-typewriter';
-import { Instagram } from '@geist-ui/icons';
-import { Sun, Moon, Github, Linkedin, Menu } from "@geist-ui/icons";
+import { Sun, Moon, Github, Linkedin, Menu, Download, Instagram } from "@geist-ui/icons";
 import '../App.css';
 
 const Theme = ({ theme, setTheme }) => {
@@ -126,37 +125,38 @@ const Results = ({ theme }) => {
     fetchCritique();
   }, []);
 
-  const fetchImage = async () => {
-    try {
-      const response = await fetch('http://127.0.0.1:5000/get-image');
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      setImageUrl(url);
-    } catch (error) {
-      console.error('Error fetching image:', error);
-    }
-  };
 
-  const shareToInstagram = async () => {
-    if (!imageUrl) {
-      await fetchImage();
+  useEffect(() => {
+    if (critique) {
+      fetch("http://127.0.0.1:5000/get-image")
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.blob();  // Treat the response as a blob (image)
+        })
+        .then((blob) => {
+          const imageUrl = URL.createObjectURL(blob); // Create object URL for image blob
+          setImageUrl(imageUrl); // Set image URL
+        })
+        .catch((error) => console.error("Error fetching image:", error));
     }
+  }, [critique]);
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          files: [new File([await (await fetch(imageUrl)).blob()], 'personify.png', { type: 'image/png' })],
-          title: 'My Music Taste Critique',
-          text: 'Check out my music taste critique!',
-        });
-      } catch (error) {
-        console.error('Sharing failed:', error);
-      }
-    } else {
-      // Instagram Deep Link (for mobile)
-      const instagramUrl = `intent://story_camera#Intent;package=com.instagram.android;scheme=https;end;`;
-      window.location.href = instagramUrl;
-    }
+  const downloadImage = () => {
+    fetch('http://127.0.0.1:5000/get-image')
+      .then((response) => response.blob())
+      .then((blob) => {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "critique.png";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      })
+      .catch((error) => {
+        console.error('Error downloading image:', error);
+      });
   };
 
   // Process critique into paragraphs with styled characters
@@ -218,7 +218,9 @@ const Results = ({ theme }) => {
       <div className='results-container'>
         <Card>
           <Card.Content my={0}>
-            <Button auto iconRight={<Instagram />} onClick={shareToInstagram} px={0.6}></Button>
+            <Tooltip text={'Download your results'}>
+              <Button auto iconRight={<Download />} onClick={downloadImage} px={0.6}></Button>
+            </Tooltip>
           </Card.Content>
         <Divider h="1px" my={0} />
         <Card.Content>
