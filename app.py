@@ -14,8 +14,11 @@ app = Flask(__name__, static_folder='build/static', template_folder='build')
 app.secret_key = os.urandom(24)
 CORS(app)
 
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
+app.config.update(
+    SESSION_COOKIE_SECURE=True,    # HTTPS only
+    SESSION_COOKIE_HTTPONLY=True,  # Prevent JS access
+    SESSION_COOKIE_SAMESITE='Lax'  # CSRF protection
+)
 
 # Spotify credentials from .env file
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
