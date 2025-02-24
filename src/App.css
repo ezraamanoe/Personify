@@ -1,0 +1,228 @@
+@font-face {
+  font-family: 'NeueMontreal';
+  src: url('/public/fonts/PPNeueMontreal/PPNeueMontrealMono-Thin.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'NeueMontreal';
+  src: url('/public/fonts/PPNeueMontreal/PPNeueMontrealMono-Book.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'NeueMontreal';
+  src: url('/public/fonts/PPNeueMontreal/PPNeueMontrealMono-RegularItalic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'NeueMontreal';
+  src: url('/public/fonts/PPNeueMontreal/PPNeueMontrealMono-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'EditorialNew';
+  src: url('/public/fonts/PPEditorialNew/PPEditorialNew-Ultrabold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'EditorialNew';
+  src: url('/public/fonts/PPEditorialNew/PPEditorialNew-UltraboldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'EditorialNew';
+  src: url('/public/fonts/PPEditorialNew/PPEditorialNew-Ultralight.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'EditorialNew';
+  src: url('/public/fonts/PPEditorialNew/PPEditorialNew-UltralightItalic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+}
+
+*{
+  font-family: 'NeueMontreal', sans-serif !important;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  font-family: 'NeueMontreal', sans-serif;
+}
+
+h1{
+  font-family: 'NeueMontreal', sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.Quotes{
+  font-family: 'NeueMontreal', sans-serif;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.App {
+  font-family: 'NeueMontreal', sans-serif !important;
+  display: flex;
+  flex-direction: column;
+  text-align: justify;
+  justify-content: space-between;
+  min-height: 100vh !important;
+  margin-bottom: 0px !important;
+
+}
+
+.App-header {
+  flex: 1;
+  font-family: 'NeueMontreal', sans-serif !important;
+  display: flex;
+  padding: 0;
+  margin: 0;
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  justify-content: center;
+  font-size: clamp(14px, 3vw, 32px);
+  width: 60%;
+  line-height: 200%;
+}
+
+
+
+button, .geist-btn {
+  font-family: 'NeueMontreal', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.navbar {
+  font-family: 'NeueMontreal', sans-serif !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+}
+
+.Description{
+  font-family: 'NeueMontreal', sans-serif !important;
+}
+.logo {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.nav-links button {
+  margin-left: 10px;
+}
+
+.custom-select {
+  margin-left: 10px !important;
+  max-width: 70px !important;
+  min-width: 70px !important;
+  font-family: 'NeueMontreal', sans-serif !important;
+}
+
+.select-options{
+  font-family: 'NeueMontreal', sans-serif !important;
+}
+.App-footer{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+}
+.author{
+  font-size: clamp(6px, 1vw, 12px);
+  font-family: 'NeueMontreal', sans-serif !important;
+  font-weight: 400 !important; 
+}
+
+.Find-out{
+  font-size: clamp(1rem, 4vw, 32px) !important;
+}
+
+.navbar a{
+  font-size: clamp(6px, 1vw, 12px);
+}
+
+.hamburger {
+  display: none;
+}
+
+@media (max-width: 500px) {
+  .navbar .nav-links{
+    display: none; 
+  }
+
+  .hamburger {
+    display: flex; 
+  }
+
+  .dropdown-menu {
+    display: flex;
+  }
+
+  .custom-select {
+    max-width: 100px !important;
+    min-width: 100px !important;
+  }
+
+  .logo{
+    font-size: clamp(14px, 3vw, 18px)
+  }
+}
+
+
+.drawer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: start;
+  padding: 10px;
+  font-size: 12px !important;
+}
+
+.results-container{
+  overflow-y: auto;
+  align-self: center;
+  padding-top: 20px;
+  padding-bottom: 0;
+  flex: 1 !important;
+  width: 60%;
+  font-size: clamp(14px, 3vw, 18px)!important;
+}
+
+.analyzing{
+  font-size: clamp(14px, 3vw, 32px)!important;
+  font-weight: 500 !important;
+}
+
+.Analyze-header{
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  flex: 0 !important;
+  font-family: 'NeueMontreal', sans-serif !important;
+  display: flex;
+  padding: 0 !important;
+  margin: 0 !important;
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  justify-content: center;
+  font-size: clamp(14px, 3vw, 32px);
+  width: 60%;
+}
