@@ -6,119 +6,108 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
+from io import BytesIO
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__, static_folder='build/static', template_folder='build')
-app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+app.secret_key = os.environ["FLASK_SECRET_KEY"]  # Must be set in Render
 CORS(app, 
-     supports_credentials=True, 
-     origins=["https://personify-ai.onrender.com"], 
-     methods=["GET", "POST"]
+    supports_credentials=True, 
+    origins=["https://personify-ai.onrender.com"], 
+    methods=["GET", "POST"]
 )
 
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Lax',
-    PERMANENT_SESSION_LIFETIME=1200  # 20 minute session lifetime
+    SESSION_COOKIE_SAMESIZE='Lax',
+    PERMANENT_SESSION_LIFETIME=1800
 )
 
-# Spotify credentials from .env file
+# Spotify credentials
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "https://personify-ai.onrender.com/callback")
 
-# Spotify Authentication URL
 @app.route('/login')
 def login():
     session.clear()
     scope = "user-read-private user-read-email user-top-read"
-    auth_url = (
-        "https://accounts.spotify.com/authorize"
-        f"?client_id={SPOTIFY_CLIENT_ID}"
-        f"&response_type=code"
-        f"&redirect_uri={SPOTIFY_REDIRECT_URI}"
-        f"&scope={scope}"
-    )
+    auth_url = f"https://accounts.spotify.com/authorize?client_id={SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri={SPOTIFY_REDIRECT_URI}&scope={scope}"
     return redirect(auth_url)
 
-# Handle Spotify Callback and Fetch Top Tracks
 @app.route('/callback')
 def callback():
     code = request.args.get("code")
     if not code:
         return jsonify({"error": "No code received from Spotify"}), 400
 
-    token_url = "https://accounts.spotify.com/api/token" #Spotify auth 
-    token_data = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": SPOTIFY_REDIRECT_URI,
-        "client_id": SPOTIFY_CLIENT_ID,
-        "client_secret": SPOTIFY_CLIENT_SECRET,
-    }
-    response = requests.post(token_url, data=token_data)
+    try:
+        # Get access token
+        token_response = requests.post(
+            "https://accounts.spotify.com/api/token",
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": SPOTIFY_REDIRECT_URI,
+                "client_id": SPOTIFY_CLIENT_ID,
+                "client_secret": SPOTIFY_CLIENT_SECRET,
+            },
+            timeout=10
+        )
+        token_response.raise_for_status()
 
-    if response.status_code == 200:
-        access_token = response.json()['access_token']
+        # Get top tracks
+        tracks_response = requests.get(
+            "https://api.spotify.com/v1/me/top/tracks?limit=10",
+            headers={"Authorization": f"Bearer {token_response.json()['access_token']}"},
+            timeout=10
+        )
+        tracks_response.raise_for_status()
 
-        top_tracks_url = "https://api.spotify.com/v1/me/top/tracks?limit=10" #Fetch top tracks
-        headers = {"Authorization": f"Bearer {access_token}"}
-        top_tracks_response = requests.get(top_tracks_url, headers=headers)
+        # Process tracks
+        tracks = [{"name": t['name'], "artist": t['artists'][0]['name']} 
+                for t in tracks_response.json()['items']]
 
-        if top_tracks_response.status_code == 200:
-            top_tracks = top_tracks_response.json()['items']
-            tracks = [
-                {"name": track['name'], "artist": track['artists'][0]['name']}
-                for track in top_tracks
-            ]
+        # Generate and store immediately
+        critique = generate_track_critique(tracks)
+        
+        session.update({
+            "tracks": tracks,
+            "critique": critique
+        })
+        
+        return redirect(f"{SPOTIFY_REDIRECT_URI}/results")
 
-            # Store tracks in session instead of calling OpenAI now
-            session['tracks'] = tracks  
-            session.modified = True  # Force session save
-
-            # Redirect to results immediately
-            return redirect("https://personify-ai.onrender.com/results")
-
-    return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 def generate_track_critique(tracks):
-    
-    print("asking chatgpt")
-    # Initialize OpenAI (or DeepSeek) client with the correct API key and endpoint
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1", timeout=30)
-
-    # Create a message to send to the model, you could use track names or further track details
-    track_names = [f"{track['name']} - {track['artist']}" for track in tracks]
-    user_message = f"Guess my MBTI and critique my top tracks from Spotify, be very mean, make fun of me. Here are the songs: {', '.join(track_names)}. don't roast the tracks one by one. use ** for bold and * for italic. limit your response to 200 words and list and enumerate the first 10 tracks (song name and artist) as '**Your top 10 tracks:**' after your description. in bold,  write a short but very niche degrading sentence about my music taste as the last sentence, on a seperate line similar to this: 'Your music taste is music-to-stalk-boys-to-jazz-snob-nobody-puts-baby-in-a-corner bad' but dont copy it. don't mention pinterest and don't assume gender. do not use any other symbol characters except for - and . in the last sentence."
-
-    # Call OpenAI (or DeepSeek) to generate a critique message
-    response = client.chat.completions.create(
-        model="deepseek/deepseek-chat:free",  # Or any other model you're using
-        messages=[
-            {"role": "system", "content": "You are a very sarcastic gen-z niche music critic who thinks everyone is beneath them and that has a deep obsession with myers-briggs."},
-            {"role": "user", "content": user_message},
-        ]
+    client = OpenAI(
+        api_key=os.getenv("OPENAI_API_KEY"),
+        base_url="https://openrouter.ai/api/v1",
+        timeout=30
     )
 
-    # Return the response from the AI (the critique)
-    print(response.choices[0].message.content)
+    track_names = [f"{t['name']} - {t['artist']}" for t in tracks]
+    user_message = f"Guess my MBTI and critique my top tracks from Spotify, be very mean. Tracks: {', '.join(track_names)}. Use **bold** and *italics*. 200 words max. End with unique roast line."
+
+    response = client.chat.completions.create(
+        model="deepseek/deepseek-chat:free",
+        messages=[
+            {"role": "system", "content": "Sarcastic music critic obsessed with MBTI."},
+            {"role": "user", "content": user_message}
+        ]
+    )
     return response.choices[0].message.content
 
 @app.route('/get-critique')
 def get_critique():
-    tracks = session.get('tracks')
-    print(tracks)
-    if not tracks:
-        return jsonify({"critique": "No tracks available."})
-
-    # Call AI now
-    critique = generate_track_critique(tracks)
-    session['critique'] = critique
-    return jsonify({"critique": critique}), 200
-
+    if "critique" not in session:
+        return jsonify({"error": "No critique available"}), 404
+    return jsonify({"critique": session["critique"]})
 @app.route('/get-image')
 def get_image():
     critique = session.get('critique')
@@ -166,11 +155,11 @@ def get_image():
     
         # Update total height offset
         z += line_height * len(track_lines) + 10
-    
-    image_path = os.path.join("build", "static", "images", "critique.png")
-    os.makedirs(os.path.dirname(image_path), exist_ok=True)
-    img.save(image_path, "PNG")
-    return send_file(image_path, as_attachment=True, download_name="critique.png")
+
+    img_io = BytesIO()
+    img.save(img_io, "PNG")
+    img_io.seek(0)
+    return send_file(img_io, mimetype="image/png")
 
 # Serve the React app
 @app.route('/')

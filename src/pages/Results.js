@@ -69,64 +69,70 @@ const Navbar = ({ theme, setTheme }) => {
 };
 
 const processParagraph = (text) => {
-  const styledChars = [];
-  let isBold = false;
-  let isItalic = false;
-  let buffer = '';
-
-  const flushBuffer = () => {
-    if (buffer) {
-      styledChars.push(...buffer.split('').map(char => ({ char, bold: isBold, italic: isItalic })));
-      buffer = '';
-    }
-  };
-
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (char === '*' && i < text.length - 1 && text[i + 1] === '*') {
-      flushBuffer();
-      isBold = !isBold;
-      i++; 
-    } else if (char === '*' && !isBold) {
-      flushBuffer();
-      isItalic = !isItalic;
+  const segments = text.split(/(\*\*.*?\*\*|\*.*?\*)/g)
+    .filter(chunk => chunk)
+    .map(chunk => ({
+      text: chunk.replace(/\*\*/g, '').replace(/\*/g, ''),
+      bold: /\*\*/.test(chunk),
+      italic: /\*/.test(chunk) && !/\*\*/.test(chunk)
+    }));
+  
+  return segments.reduce((acc, segment) => {
+    if (acc.length > 0 && 
+        acc[acc.length-1].bold === segment.bold && 
+        acc[acc.length-1].italic === segment.italic) {
+      acc[acc.length-1].text += segment.text;
     } else {
-      buffer += char;
+      acc.push(segment);
     }
-  }
-
-  flushBuffer();
-  return styledChars;
+    return acc;
+  }, []);
 };
 
 const Results = ({ theme }) => {
   const [critique, setCritique] = useState('');
-  const [loading, setLoading] = useState(true); // Set loading to true initially
-  const [paragraphs, setParagraphs] = useState([]); // Processed paragraphs
+  const [loading, setLoading] = useState(true);
+  const [paragraphs, setParagraphs] = useState([]);
   const [currentParaIndex, setCurrentParaIndex] = useState(0);
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
   const intervalRef = useRef(null);
+  const isMounted = useRef(true);
 
   // Fetch critique from API
   useEffect(() => {
     const fetchCritique = async () => {
       try {
-        const response = await fetch('https://personify-ai.onrender.com/get-critique');
+        const response = await fetch('https://personify-ai.onrender.com/get-critique', {
+          credentials: 'include'  // Essential fix for session cookies
+        });
+        
+        if (!response.ok) throw new Error('Failed to load critique');
+        
         const data = await response.json();
-        setCritique(data.critique);
+        if (isMounted.current) setCritique(data.critique);
       } catch (error) {
-        console.error('Error:', error);
-        setCritique('Failed to load critique.');
+        if (isMounted.current) setCritique('Failed to load critique. Please refresh.');
       } finally {
-        setLoading(false); // Set loading to false after fetching
+        if (isMounted.current) setLoading(false);
       }
     };
+    
     fetchCritique();
+    
+    return () => {
+      isMounted.current = false;
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, []);
 
   const downloadImage = () => {
-    fetch('https://personify-ai.onrender.com/get-image')
-      .then((response) => response.blob())
+    fetch('https://personify-ai.onrender.com/get-image', {
+      credentials: 'include'  // Essential fix for session cookies
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error('Image not ready');
+        return response.blob();
+      })
       .then((blob) => {
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
@@ -136,7 +142,7 @@ const Results = ({ theme }) => {
         document.body.removeChild(link);
       })
       .catch((error) => {
-        console.error('Error downloading image:', error);
+        console.error('Download error:', error);
       });
   };
 
@@ -157,22 +163,20 @@ const Results = ({ theme }) => {
     intervalRef.current = setInterval(() => {
       setCurrentCharIndex(prev => {
         if (prev < currentParagraph.length) return prev + 1;
-        else {
-          clearInterval(intervalRef.current);
-          // Move to next paragraph after delay
-          setTimeout(() => {
-            setCurrentParaIndex(prev => prev + 1);
-            setCurrentCharIndex(0);
-          }, 1000);
-          return prev;
-        }
+        
+        clearInterval(intervalRef.current);
+        setTimeout(() => {
+          setCurrentParaIndex(prev => prev + 1);
+          setCurrentCharIndex(0);
+        }, 1000);
+        
+        return prev;
       });
     }, 20);
 
     return () => clearInterval(intervalRef.current);
   }, [currentParaIndex, paragraphs]);
 
-  // Get characters to display for the current paragraph
   const currentText = paragraphs[currentParaIndex]?.slice(0, currentCharIndex) || [];
 
   return (
@@ -181,11 +185,7 @@ const Results = ({ theme }) => {
         <header className='Analyze-header'>
           <span className="analyzing">
             <Typewriter
-              words={['Analyzing...',
-                      'Looking through your songs...' ,
-                      'Wait for it...',
-                      'Stay with me now...',
-                      'Hold on...']}
+              words={['Analyzing...', 'Looking through your songs...', 'Almost there...']}
               loop
               cursor
               cursorStyle='|'
@@ -204,9 +204,8 @@ const Results = ({ theme }) => {
         <Divider h="1px" my={0} />
         <Card.Content>
           {paragraphs.slice(0, currentParaIndex).map((para, i) => (
-            <p key={i}
-            style={{color: i === paragraphs.length - 1 ? '#0070F3' : 'inherit',}}>
-              {para.map(({ char, bold, italic }, j) => (
+            <p key={i} style={{color: i === paragraphs.length - 1 ? '#0070F3' : 'inherit'}}>
+              {para.map(({ text, bold, italic }, j) => (
                 <span
                   key={j}
                   style={{
@@ -214,15 +213,14 @@ const Results = ({ theme }) => {
                     fontStyle: italic ? 'italic' : 'normal',
                   }}
                 >
-                  {char}
+                  {text}
                 </span>
               ))}
             </p>
           ))}
-          {/* Currently typing paragraph */}
           {currentText.length > 0 && (
-            <p style={{color: currentParaIndex === paragraphs.length - 1 ? '#0070F3' : 'inherit',}}>
-              {currentText.map(({ char, bold, italic }, j) => (
+            <p style={{color: currentParaIndex === paragraphs.length - 1 ? '#0070F3' : 'inherit'}}>
+              {currentText.map(({ text, bold, italic }, j) => (
                 <span
                   key={j}
                   style={{
@@ -230,7 +228,7 @@ const Results = ({ theme }) => {
                     fontStyle: italic ? 'italic' : 'normal',
                   }}
                 >
-                  {char}
+                  {text}
                 </span>
               ))}
             </p>
@@ -241,13 +239,12 @@ const Results = ({ theme }) => {
       )} 
     <footer className="App-footer">
         <p>
-          <span className="author">Developed by Ezra Manoe, heavily inspired by <a href="https://pudding.cool/2021/10/judge-my-music/" target="blank">pudding.cool</a></span>
+          <span className="author">Developed by Ezra Manoe, heavily inspired by <a href="https://pudding.cool/2021/10/judge-my-music/" target="blank" rel="noopener noreferrer">pudding.cool</a></span>
         </p>
     </footer>
     </>
   );
 };
-
 
 const App = () => {
   const [theme, setTheme] = useState("light");
