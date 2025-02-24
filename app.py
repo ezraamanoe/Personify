@@ -12,7 +12,7 @@ load_dotenv()
 
 app = Flask(__name__, static_folder='build/static', template_folder='build')
 app.secret_key = os.urandom(24)
-CORS(app, origins=["http://localhost:3000", "https://personify-nu.vercel.app"])
+CORS(app, origins="https://personify-nu.vercel.app")
 
 # Spotify credentials from .env file
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
