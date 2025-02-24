@@ -105,6 +105,7 @@ const Results = ({ theme }) => {
   const [paragraphs, setParagraphs] = useState([]); // Processed paragraphs
   const [currentParaIndex, setCurrentParaIndex] = useState(0);
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
+  const [setImageUrl] = useState('');
   const intervalRef = useRef(null);
 
   // Fetch critique from API
