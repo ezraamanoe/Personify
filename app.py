@@ -12,7 +12,11 @@ load_dotenv()
 
 app = Flask(__name__, static_folder='build/static', template_folder='build')
 app.secret_key = os.urandom(24)
-CORS(app, supports_credentials=True)
+CORS(app, 
+     supports_credentials=True, 
+     origins=["https://personify-ai.onrender.com"], 
+     methods=["GET", "POST"]
+)
 
 app.config.update(
     SESSION_COOKIE_SECURE=True,
@@ -81,9 +85,10 @@ def callback():
     return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
 
 def generate_track_critique(tracks):
+    
     print("asking chatgpt")
     # Initialize OpenAI (or DeepSeek) client with the correct API key and endpoint
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1")
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1", timeout=30)
 
     # Create a message to send to the model, you could use track names or further track details
     track_names = [f"{track['name']} - {track['artist']}" for track in tracks]
@@ -112,7 +117,7 @@ def get_critique():
     # Call AI now
     critique = generate_track_critique(tracks)
     session['critique'] = critique
-    return jsonify({"critique": critique})
+    return jsonify({"critique": critique}), 200
 
 @app.route('/get-image')
 def get_image():
