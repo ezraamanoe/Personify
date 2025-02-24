@@ -11,7 +11,7 @@ import textwrap
 load_dotenv()
 
 app = Flask(__name__, static_folder='build/static', template_folder='build')
-app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
 CORS(app, 
      supports_credentials=True, 
      origins=["https://personify-ai.onrender.com"], 
@@ -85,7 +85,6 @@ def callback():
     return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
 
 def generate_track_critique(tracks):
-    
     print("asking chatgpt")
     # Initialize OpenAI (or DeepSeek) client with the correct API key and endpoint
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1", timeout=30)

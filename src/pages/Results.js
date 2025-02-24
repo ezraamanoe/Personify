@@ -111,7 +111,7 @@ const Results = ({ theme }) => {
   useEffect(() => {
     const fetchCritique = async () => {
       try {
-        const response = await fetch('https://personify-ai.onrender.com/get-critique');
+        const response = await fetch('https://personify-ai.onrender.com/get-critique', {credentials: 'include'});
         const data = await response.json();
         setCritique(data.critique);
       } catch (error) {
