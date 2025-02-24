@@ -11,7 +11,7 @@ import textwrap
 load_dotenv()
 
 app = Flask(__name__, static_folder='build/static', template_folder='build')
-app.secret_key = os.urandom(24)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 CORS(app, 
      supports_credentials=True, 
      origins=["https://personify-ai.onrender.com"], 
