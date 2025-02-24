@@ -72,7 +72,7 @@ def callback():
             session.modified = True  # Force session save
 
             # Redirect to results immediately
-            return redirect("http://personify-ai.onrender.com/results")
+            return redirect("https://personify-ai.onrender.com/results")
 
     return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
 
