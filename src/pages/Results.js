@@ -112,7 +112,7 @@ const Results = ({ theme }) => {
   useEffect(() => {
     const fetchCritique = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:5000/get-critique');
+        const response = await fetch('http://personify.vercel.app/get-critique');
         const data = await response.json();
         setCritique(data.critique);
       } catch (error) {
@@ -128,7 +128,7 @@ const Results = ({ theme }) => {
 
   useEffect(() => {
     if (critique) {
-      fetch("http://127.0.0.1:5000/get-image")
+      fetch("http://personify.vercel.app/get-image")
         .then((response) => {
           if (!response.ok) {
             throw new Error('Network response was not ok');
@@ -144,7 +144,7 @@ const Results = ({ theme }) => {
   }, [critique]);
 
   const downloadImage = () => {
-    fetch('http://127.0.0.1:5000/get-image')
+    fetch('http://personify.vercel.app/get-image')
       .then((response) => response.blob())
       .then((blob) => {
         const link = document.createElement("a");

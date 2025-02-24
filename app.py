@@ -17,7 +17,7 @@ CORS(app, origins="http://localhost:3000")  # Allow React app on port 3000
 # Spotify credentials from .env file
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
-SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:5000/callback")
+SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "http://personify.vercel.app/callback")
 
 # Spotify Authentication URL
 @app.route('/login')
@@ -67,7 +67,7 @@ def callback():
             session['tracks'] = tracks  
 
             # Redirect to results immediately
-            return redirect("http://127.0.0.1:5000/results")
+            return redirect("http://personify.vercel.app/results")
 
     return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
 

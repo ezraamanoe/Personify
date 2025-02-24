@@ -8,7 +8,7 @@ const Home = ({ theme }) => {
   const handleSpotifyAuth = async () => {
     try {
         // Simply redirect to the /login endpoint, which will handle the redirection to Spotify
-        window.location.href = "http://127.0.0.1:5000/login";
+        window.location.href = "http://personify.vercel.app/login";
     } catch (error) {
         console.error("Error during authentication:", error);
     }
