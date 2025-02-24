@@ -1,7 +1,7 @@
-import { CssBaseline, GeistProvider, Card, Button, Divider, Select, Drawer, Tooltip } from '@geist-ui/core';
+import { CssBaseline, GeistProvider, Card, Button, Divider, Select, Drawer} from '@geist-ui/core';
 import React, { useEffect, useState, useRef } from 'react';
 import { Typewriter } from 'react-simple-typewriter';
-import { Sun, Moon, Github, Linkedin, Menu, Download, Instagram } from "@geist-ui/icons";
+import { Sun, Moon, Github, Linkedin, Menu, Download} from "@geist-ui/icons";
 import '../App.css';
 
 const Theme = ({ theme, setTheme }) => {
@@ -105,7 +105,6 @@ const Results = ({ theme }) => {
   const [paragraphs, setParagraphs] = useState([]); // Processed paragraphs
   const [currentParaIndex, setCurrentParaIndex] = useState(0);
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
-  const [imageUrl, setImageUrl] = useState('');
   const intervalRef = useRef(null);
 
   // Fetch critique from API

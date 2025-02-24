@@ -1,13 +1,12 @@
 import React, { useEffect, useState} from 'react';
 import '../App.css';
-import { GeistProvider, CssBaseline, Button, Tooltip} from '@geist-ui/core';
+import { GeistProvider, CssBaseline, Button} from '@geist-ui/core';
 import { Typewriter } from 'react-simple-typewriter';
 import Navbar from '../components/Navbar';
 
 const Home = ({ theme }) => {
   const handleSpotifyAuth = async () => {
     try {
-        // Simply redirect to the /login endpoint, which will handle the redirection to Spotify
         window.location.href = "http://personify-nu.vercel.app/login";
     } catch (error) {
         console.error("Error during authentication:", error);
