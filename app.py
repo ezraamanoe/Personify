@@ -74,9 +74,10 @@ def callback():
         # Generate and store immediately
         critique = generate_track_critique(tracks)
         
-        session['tracks'] = tracks
-        session['critique'] = critique
-        session.modified = True
+        session.update({
+            "tracks": tracks,
+            "critique": critique
+        })
         
         return redirect("https://personify-ai.onrender.com/results")
 
