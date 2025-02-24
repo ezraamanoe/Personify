@@ -60,7 +60,7 @@
 
 body {
   width: 100vw;
-  height: 100vh;
+  height: 100dvh !important;
   font-family: 'NeueMontreal', sans-serif;
 }
 
@@ -82,8 +82,8 @@ h1{
   flex-direction: column;
   text-align: justify;
   justify-content: space-between;
-  min-height: 100vh !important;
   min-height: -webkit-fill-available !important;
+  height: 100dvh !important;
   margin-bottom: 0px !important;
 
 }
