@@ -11,7 +11,7 @@ import textwrap
 load_dotenv()
 
 app = Flask(__name__, static_folder='build/static', template_folder='build')
-app.secret_key = ("FLASK_SECRET_KEY", os.urandom(24))
+app.secret_key = os.urandom(24)
 CORS(app, supports_credentials=True)
 
 app.config.update(
