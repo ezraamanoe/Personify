@@ -83,6 +83,7 @@ h1{
   text-align: justify;
   justify-content: space-between;
   min-height: 100vh !important;
+  min-height: -webkit-fill-available !important;
   margin-bottom: 0px !important;
 
 }
