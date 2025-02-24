@@ -105,7 +105,7 @@ const Results = ({ theme }) => {
   const [paragraphs, setParagraphs] = useState([]); // Processed paragraphs
   const [currentParaIndex, setCurrentParaIndex] = useState(0);
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
-  const [setImageUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const intervalRef = useRef(null);
 
   // Fetch critique from API
@@ -136,7 +136,7 @@ const Results = ({ theme }) => {
           return response.blob();  // Treat the response as a blob (image)
         })
         .then((blob) => {
-          const imageUrl = URL.createObjectURL(blob); // Create object URL for image blob
+          imageUrl = URL.createObjectURL(blob); // Create object URL for image blob
           setImageUrl(imageUrl); // Set image URL
         })
         .catch((error) => console.error("Error fetching image:", error));
