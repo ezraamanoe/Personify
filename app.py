@@ -102,26 +102,26 @@ def generate_track_critique(tracks, max_retries=3, retry_delay=2):
     user_message = f"Guess my MBTI and critique my top tracks from Spotify, be very mean, make fun of me. Here are the songs: {', '.join(track_names)}. don't roast the tracks one by one. use ** for bold and * for italic. limit your response to 200 words and list and enumerate the first 10 tracks (song name and artist) as '**Your top 10 tracks:**' after your description. in bold,  write a short but very niche degrading sentence about my music taste as the last sentence, on a seperate line similar to this: 'Your music taste is music-to-stalk-boys-to-jazz-snob-nobody-puts-baby-in-a-corner bad' but dont copy it. don't mention pinterest and don't assume gender. do not use any other symbol characters except for - and . in the last sentence."
 
     # Retry loop
-    for attempt in range(max_retries):
-        # Call OpenAI (or DeepSeek) to generate a critique message
+    for attempt in range(1, max_retries + 1):
         response = client.chat.completions.create(
-            model="deepseek/deepseek-chat:free",  # Or any other model you're using
+            model="deepseek/deepseek-chat:free",
             messages=[
-                {"role": "system", "content": "You are a very sarcastic gen-z niche music critic who thinks everyone is beneath them and that has a deep obsession with myers-briggs."},
+                {"role": "system", "content": "You are a very sarcastic gen-z niche music critic who thinks everyone is beneath them and has a deep obsession with Myers-Briggs."},
                 {"role": "user", "content": user_message},
             ]
         )
 
-        # Check if response has valid critique content
-        if response.choices and response.choices[0].message.content.strip():
-            print(response.choices[0].message.content)
-            return response.choices[0].message.content
-        else:
-            # If no valid critique, print a warning and wait before retrying
-            print(f"Retry {attempt + 1} failed. No valid critique returned. Waiting before retrying...")
-            time.sleep(retry_delay + random.uniform(0, 2))  # Add random delay to avoid hitting rate limits
+        # Extract critique text
+        critique = response.choices[0].message.content.strip() if response.choices else ""
 
-    # After max retries, return a fallback message
+        # Check if critique is valid and at least 100 words
+        if critique and len(critique.split()) >= 100:
+            print(critique)
+            return critique
+        else:
+            print(f"Retry {attempt} failed. Critique too short ({len(critique.split())} words). Retrying...")
+            time.sleep(retry_delay + random.uniform(0, 2))
+
     print("All retries failed. Returning fallback message.")
     return "Your music taste broke the AI. Please reload the page or go back to home."
 
