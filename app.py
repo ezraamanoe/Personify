@@ -1,3 +1,7 @@
+import eventlet
+eventlet.monkey_patch()  # This must be the first import
+
+
 import os
 import requests
 from flask import Flask, redirect, request, jsonify, send_from_directory, session, send_file
