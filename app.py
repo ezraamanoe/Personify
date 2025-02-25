@@ -172,11 +172,9 @@ def get_image():
         # Update total height offset
         z += line_height * len(track_lines) + 10
     
-    img_io = io.BytesIO()
-    img.save(img_io, format="PNG")
-    img_io.seek(0)
-
-    return send_file(img_io, mimetype="image/png", as_attachment=True, download_name="critique.png")
+    temp_image_path = os.path.join("/tmp", "critique.png")
+    img.save(temp_image_path, "PNG")
+    return send_file(temp_image_path, as_attachment=True, download_name="critique.png")
 
 # Serve the React app
 @app.route('/')
