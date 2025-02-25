@@ -90,8 +90,7 @@ def callback():
     return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
 
 def generate_track_critique(tracks):
-    
-    print("asking chatgpt")
+    print("Asking OpenAI for critique...")
     # Initialize OpenAI (or DeepSeek) client with the correct API key and endpoint
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1", timeout=600)
 
@@ -108,6 +107,9 @@ def generate_track_critique(tracks):
         ]
     )
 
+    print(f"Critique generated: {response.choices[0].message.content}")
+    return response.choices[0].message.content
+
     # Return the response from the AI (the critique)
     print(response.choices[0].message.content)
     return response.choices[0].message.content
@@ -122,7 +124,8 @@ def get_critique():
     try:
         critique = generate_track_critique(tracks)
         session['critique'] = critique
-        session.modified = True
+        session.modified = True  # Ensure session is updated
+        print(f"Stored critique in session: {critique}")
         return jsonify({"critique": critique}), 200
     except Exception as e:
         return jsonify({"error": f"Error generating critique: {str(e)}"}), 500
