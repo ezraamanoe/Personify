@@ -91,33 +91,29 @@ def callback():
 
 def generate_track_critique(tracks):
     print("Asking OpenAI for critique...")
-    # Initialize OpenAI (or DeepSeek) client with the correct API key and endpoint
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1", timeout=600)
 
-    # Create a message to send to the model, you could use track names or further track details
     track_names = [f"{track['name']} - {track['artist']}" for track in tracks]
-    user_message = f"Guess my MBTI and critique my top tracks from Spotify, make fun of me. Here are the songs: {', '.join(track_names)}. don't roast the tracks one by one. limit your response to 200 words and list and enumerate the first 10 tracks (song name and artist) as '**Your top 10 tracks:**' after your description. in bold,  write a short but very niche degrading sentence about my music taste as the last sentence, on a seperate line similar to this: 'Your music taste is music-to-stalk-boys-to-jazz-snob-nobody-puts-baby-in-a-corner bad' but dont copy it."
+    user_message = f"Guess my MBTI and critique my top tracks from Spotify, be very mean, make fun of me. Here are the songs: {', '.join(track_names)}."
 
-    # Call OpenAI (or DeepSeek) to generate a critique message
-    try:
-        response = client.chat.completions.create(
-            model="deepseek/deepseek-chat:free",  # Or any other model you're using
-            messages=[
-                {"role": "system", "content": "You are a very sarcastic gen-z niche music critic who thinks everyone is beneath them and that has a deep obsession with myers-briggs."},
-                {"role": "user", "content": user_message},
-            ]
-        )
-        print(f"Full OpenAI response: {response}")
-        if response and "choices" in response and len(response["choices"]) > 0:
-            critique_content = response["choices"][0].get("message", {}).get("content", "")
-            print(f"Critique content: {critique_content}")
-            return critique_content
-        else:
-            print("No valid critique content in the response.")
-            return "Your music taste broke the AI. Please reload the page or go back to home."
-    except Exception as e:
-        print(f"Error occurred during OpenAI request: {e}")
-        return "Your music taste broke the AI. Please reload the page or go back to home."
+    response = client.chat.completions.create(
+        model="deepseek/deepseek-chat:free",
+        messages=[
+            {"role": "system", "content": "You are a very sarcastic gen-z niche music critic."},
+            {"role": "user", "content": user_message},
+        ]
+    )
+
+    print("Full OpenAI response:", response)
+    critique_content = response.choices[0].message.content.strip()
+
+    if critique_content:
+        session['critique'] = critique_content
+        session.modified = True  # Force session save
+    else:
+        session['critique'] = "No critique content returned. Please try again later."
+    
+    return critique_content
 
 @app.route('/get-critique')
 def get_critique():
