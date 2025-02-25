@@ -144,7 +144,7 @@ def get_image():
     end_critique = textwrap.fill(str(end_critique), width = 40)
     
     # Load font
-    font_path = os.path.join(app.root_path, 'build', 'static', 'fonts', 'PPNeueMontrealMono-Medium.otf')
+    font_path = os.path.join('/opt/render/project/src', 'build', 'static', 'fonts', 'PPNeueMontrealMono-Medium.otf')
     font = ImageFont.truetype(font_path, 70)
     fontSub = ImageFont.truetype(font_path, 40)
     
