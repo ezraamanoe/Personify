@@ -93,7 +93,6 @@ def callback():
 
 def generate_track_critique(tracks):
     try:
-        logger.info("Generating track critique...")
         client = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
             base_url="https://openrouter.ai/api/v1",
@@ -119,7 +118,6 @@ def generate_track_critique(tracks):
         
         return critique
     except Exception as e:
-        logger.error(f"Error generating critique: {str(e)}")
         return "Failed to generate critique. Your music taste broke the AI."
 
 @app.route('/callback')
