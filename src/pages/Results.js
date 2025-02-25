@@ -127,6 +127,7 @@ const Results = ({ theme }) => {
         if (attempt < MAX_ATTEMPTS) {
           setAttempts(attempt + 1);
           console.log(`Attempt ${attempt}: Retrying...`);
+          console.log(`Attempts: ${attempts}`);
           setTimeout(() => fetchCritique(attempt + 1), 2000); // Retry after 2 seconds
         } else {
           setCritique('Failed to load critique after multiple attempts.');
