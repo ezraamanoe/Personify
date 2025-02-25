@@ -120,7 +120,7 @@ def generate_track_critique(tracks, max_retries=3, retry_delay=2):
             return critique
         else:
             print(f"Retry {attempt} failed. Critique too short ({len(critique.split())} words). Retrying...")
-            time.sleep(retry_delay + random.uniform(0, 2))
+            time.sleep(retry_delay + random.uniform(1, 2))
 
     print("All retries failed. Returning fallback message.")
     return "Your music taste broke the AI. Please reload the page or go back to home."
@@ -156,6 +156,7 @@ def get_image():
         else:
             break
 
+    j = 100
     img = Image.new("RGB", (1080, 1920), color="black")
     draw = ImageDraw.Draw(img)
     end_critique = textwrap.fill(str(end_critique), width = 40)
@@ -166,16 +167,16 @@ def get_image():
     fontSub = ImageFont.truetype(font_path, 40)
     
     # Draw text onto image
-    draw.text((50, 50), text="Personify AI", fill="white", font=font)
-    draw.text((50, 200), end_critique, fill="#0070f3", font=fontSub)
+    draw.text((50, 50 + j), text="Personify AI", fill="white", font=font)
+    draw.text((50, 200 + j), end_critique, fill="#0070f3", font=fontSub)
     
     lines = end_critique.split("\n")
     _, _, _, line_height = draw.textbbox((0, 0), "a", font=fontSub)  # Calculate height of Critique
     
     line_height *= len(lines)
-    draw.text((50, 350 + int(line_height)), text="Your top tracks:", fill="white", font=font)
+    draw.text((50, 350 + int(line_height) + j), text="Your top tracks:", fill="white", font=font)
     
-    x = 550  # Starting y-position
+    x = 550 + j  # Starting y-position
     z = 0    # Tracks total height offset
     
     # Get height of a single line of text
@@ -185,7 +186,7 @@ def get_image():
         formatted_track = textwrap.fill(str(track), width=45)
         track_lines = formatted_track.split("\n")  # Split into multiple lines
     
-        draw.text((50, x + z + int(line_height)), text=formatted_track, fill="#0070f3", font=fontSub)  
+        draw.text((50, x + z + int(line_height) + j), text=formatted_track, fill="#0070f3", font=fontSub)  
     
         # Update total height offset
         z += line_height * len(track_lines) + 10
