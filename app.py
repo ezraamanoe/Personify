@@ -93,7 +93,7 @@ def generate_track_critique(tracks):
     
     print("asking chatgpt")
     # Initialize OpenAI (or DeepSeek) client with the correct API key and endpoint
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1", timeout=30)
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1", timeout=600)
 
     # Create a message to send to the model, you could use track names or further track details
     track_names = [f"{track['name']} - {track['artist']}" for track in tracks]
