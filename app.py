@@ -54,42 +54,96 @@ def login():
 # Handle Spotify Callback and Fetch Top Tracks
 @app.route('/callback')
 def callback():
-    code = request.args.get("code")
-    if not code:
-        return jsonify({"error": "No code received from Spotify"}), 400
+    try:
+        code = request.args.get("code")
+        if not code:
+            return jsonify({"error": "Authorization code missing"}), 400
 
-    token_url = "https://accounts.spotify.com/api/token" #Spotify auth 
-    token_data = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": SPOTIFY_REDIRECT_URI,
-        "client_id": SPOTIFY_CLIENT_ID,
-        "client_secret": SPOTIFY_CLIENT_SECRET,
-    }
-    response = requests.post(token_url, data=token_data)
+        # Create a session with retry logic
+        session = requests.Session()
+        retry = requests.adapters.Retry(
+            total=3,
+            backoff_factor=0.5,
+            status_forcelist=[500, 502, 503, 504]
+        )
+        adapter = requests.adapters.HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
 
-    if response.status_code == 200:
-        access_token = response.json()['access_token']
+        # Exchange code for access token
+        token_url = "https://accounts.spotify.com/api/token"
+        token_data = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": SPOTIFY_REDIRECT_URI,
+            "client_id": SPOTIFY_CLIENT_ID,
+            "client_secret": SPOTIFY_CLIENT_SECRET,
+        }
+        
+        # Add timeout and headers
+        token_response = session.post(
+            token_url,
+            data=token_data,
+            timeout=10,
+            headers={'Content-Type': 'application/x-www-form-urlencoded'}
+        )
+        
+        # Check for token errors
+        if token_response.status_code != 200:
+            error = token_response.json().get('error', 'Unknown token error')
+            description = token_response.json().get('error_description', 'No description')
+            return jsonify({
+                "error": f"Spotify token error: {error}",
+                "description": description
+            }), token_response.status_code
 
-        top_tracks_url = "https://api.spotify.com/v1/me/top/tracks?limit=10" #Fetch top tracks
-        headers = {"Authorization": f"Bearer {access_token}"}
-        top_tracks_response = requests.get(top_tracks_url, headers=headers)
+        access_token = token_response.json()['access_token']
 
-        if top_tracks_response.status_code == 200:
-            top_tracks = top_tracks_response.json()['items']
-            tracks = [
-                {"name": track['name'], "artist": track['artists'][0]['name']}
-                for track in top_tracks
-            ]
+        # Get top tracks with error handling
+        top_tracks_url = "https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=medium_term"
+        tracks_response = session.get(
+            top_tracks_url,
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            },
+            timeout=10
+        )
 
-            # Store tracks in session instead of calling OpenAI now
-            session['tracks'] = tracks  
-            session.modified = True  # Force session save
+        if tracks_response.status_code != 200:
+            error = tracks_response.json().get('error', {}).get('message', 'Unknown tracks error')
+            return jsonify({
+                "error": f"Spotify API error: {error}",
+                "status_code": tracks_response.status_code
+            }), tracks_response.status_code
 
-            # Redirect to results immediately
-            return redirect("https://personify-ai.onrender.com/results")
+        top_tracks = tracks_response.json()['items']
+        tracks = [
+            {"name": track['name'], "artist": track['artists'][0]['name']}
+            for track in top_tracks
+        ]
 
-    return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
+        # Session handling with verification
+        session['tracks'] = tracks
+        session.modified = True
+        
+        # Verify session persistence
+        if not session.get('tracks'):
+            return jsonify({"error": "Session storage failed"}), 500
+
+        # Add short delay to ensure cookie persistence
+        time.sleep(0.5)
+        
+        return redirect("https://personify-ai.onrender.com/results")
+
+    except requests.exceptions.Timeout:
+        return jsonify({"error": "Spotify API timeout"}), 504
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Network error: {str(e)}"}), 503
+    except KeyError as e:
+        return jsonify({"error": f"Missing data in response: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
 
 def generate_track_critique(tracks, max_retries=3, retry_delay=2):
@@ -103,24 +157,35 @@ def generate_track_critique(tracks, max_retries=3, retry_delay=2):
 
     # Retry loop
     for attempt in range(1, max_retries + 1):
-        response = client.chat.completions.create(
-            model="deepseek/deepseek-chat:free",
-            messages=[
-                {"role": "system", "content": "You are a very sarcastic gen-z niche music critic who thinks everyone is beneath them and has a deep obsession with Myers-Briggs."},
-                {"role": "user", "content": user_message},
-            ]
-        )
+        try:
+            response = client.chat.completions.create(
+                model="deepseek/deepseek-chat:free",
+                messages=[
+                    {"role": "system", "content": "You are a very sarcastic Gen-Z niche music critic who thinks everyone is beneath them and has a deep obsession with Myers-Briggs."},
+                    {"role": "user", "content": user_message},
+                ]
+            )
 
-        # Extract critique text
-        critique = response.choices[0].message.content.strip() if response.choices else ""
+            # Debug: Print full API response
+            print("Full API response:", response)
 
-        # Check if critique is valid and at least 100 words
-        if critique and len(critique.split()) >= 100:
-            print(critique)
-            return critique
-        else:
-            print(f"Retry {attempt} failed. Critique too short ({len(critique.split())} words). Retrying...")
-            time.sleep(retry_delay + random.uniform(1, 2))
+            # Validate API response structure
+            if response and response.choices and response.choices[0].message and response.choices[0].message.content:
+                critique = response.choices[0].message.content.strip()
+            else:
+                critique = ""  # Fallback if response is empty
+
+            # Check if critique meets the word limit
+            if len(critique.split()) >= 100:
+                print("Received critique:", critique)
+                return critique
+            else:
+                print(f"Retry {attempt} failed. Critique too short ({len(critique.split())} words). Retrying...")
+
+        except Exception as e:
+            print(f"Error calling AI: {e}")
+
+        time.sleep(retry_delay + random.uniform(1, 2))
 
     print("All retries failed. Returning fallback message.")
     return "Your music taste broke the AI. Please reload the page or go back to home."
