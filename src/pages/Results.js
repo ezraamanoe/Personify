@@ -138,7 +138,7 @@ const Results = ({ theme }) => {
     };
 
     fetchCritique();
-  }, []);
+  }, [attempts]);
   const downloadImage = () => {
     fetch('https://personify-ai.onrender.com/get-image')
       .then((response) => response.blob())
