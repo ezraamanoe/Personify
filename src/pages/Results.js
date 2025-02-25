@@ -112,15 +112,21 @@ const Results = ({ theme }) => {
     const fetchCritique = async () => {
       try {
         const response = await fetch('https://personify-ai.onrender.com/get-critique', {credentials: 'include'});
-        const data = await response.json();
-        setCritique(data.critique);
+        if (response.ok) {
+          const data = await response.json();
+          setCritique(data.critique);
+        } else {
+          console.error('Error fetching critique:', response.statusText);
+          setCritique('Error fetching critique.');
+        }
       } catch (error) {
         console.error('Error:', error);
         setCritique('Failed to load critique.');
       } finally {
-        setLoading(false); // Set loading to false after fetching
+        setLoading(false);  // Ensure loading state is updated
       }
     };
+  
     fetchCritique();
   }, []);
 

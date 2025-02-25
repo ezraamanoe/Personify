@@ -115,14 +115,17 @@ def generate_track_critique(tracks):
 @app.route('/get-critique')
 def get_critique():
     tracks = session.get('tracks')
-    print(tracks)
     if not tracks:
-        return jsonify({"critique": "No tracks available."})
+        return jsonify({"critique": "No tracks available."}), 400  # Return error if no tracks
 
-    # Call AI now
-    critique = generate_track_critique(tracks)
-    session['critique'] = critique
-    return jsonify({"critique": critique}), 200
+    # Call AI to generate critique
+    try:
+        critique = generate_track_critique(tracks)
+        session['critique'] = critique
+        session.modified = True
+        return jsonify({"critique": critique}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error generating critique: {str(e)}"}), 500
 
 @app.route('/get-image')
 def get_image():
