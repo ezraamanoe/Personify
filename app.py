@@ -44,53 +44,6 @@ def login():
     )
     return redirect(auth_url)
 
-# Handle Spotify Callback and Fetch Top Tracks
-@app.route('/callback')
-def callback():
-    code = request.args.get("code")
-    if not code:
-        return jsonify({"error": "No code received from Spotify"}), 400
-
-    token_url = "https://accounts.spotify.com/api/token" #Spotify auth 
-    token_data = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": SPOTIFY_REDIRECT_URI,
-        "client_id": SPOTIFY_CLIENT_ID,
-        "client_secret": SPOTIFY_CLIENT_SECRET,
-    }
-    response = requests.post(token_url, data=token_data)
-
-    if response.status_code == 200:
-        access_token = response.json()['access_token']
-
-        top_tracks_url = "https://api.spotify.com/v1/me/top/tracks?limit=10" #Fetch top tracks
-        headers = {"Authorization": f"Bearer {access_token}"}
-        top_tracks_response = requests.get(top_tracks_url, headers=headers)
-
-        if top_tracks_response.status_code == 200:
-            top_tracks = top_tracks_response.json()['items']
-            tracks = [
-                {"name": track['name'], "artist": track['artists'][0]['name']}
-                for track in top_tracks
-            ]
-
-            critique = generate_track_critique(tracks)
-        
-            session.update({
-                "tracks": tracks,
-                "critique": critique,
-                "_fresh": True,
-                "_permanent": True
-            })
-            
-            session.modified = True
-
-            # Redirect to results immediately
-            return redirect("https://personify-ai.onrender.com/results")
-
-    return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
-
 def generate_track_critique(tracks):
     try:
         client = OpenAI(
