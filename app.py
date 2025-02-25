@@ -83,6 +83,8 @@ def callback():
                 "_fresh": True,
                 "_permanent": True
             })
+            
+            session.modified = True
 
             # Redirect to results immediately
             return redirect("https://personify-ai.onrender.com/results")
@@ -112,12 +114,12 @@ def generate_track_critique(tracks):
 
 @app.route('/get-critique')
 def get_critique():
-    tracks = session.get('tracks')
-    print(tracks)
-    if not tracks:
-        return jsonify({"critique": "No tracks available."})
-
-    return jsonify({"critique": session["critique"]})
+    try:
+        # Ensure session is loaded
+        critique = session.get("critique", "Critique not available")
+        return jsonify({"critique": critique})
+    except Exception as e:
+        return jsonify({"critique": "Error loading critique"})
 
 @app.route('/get-image')
 def get_image():
