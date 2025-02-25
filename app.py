@@ -54,96 +54,42 @@ def login():
 # Handle Spotify Callback and Fetch Top Tracks
 @app.route('/callback')
 def callback():
-    try:
-        code = request.args.get("code")
-        if not code:
-            return jsonify({"error": "Authorization code missing"}), 400
+    code = request.args.get("code")
+    if not code:
+        return jsonify({"error": "No code received from Spotify"}), 400
 
-        # Create a session with retry logic
-        session = requests.Session()
-        retry = requests.adapters.Retry(
-            total=3,
-            backoff_factor=0.5,
-            status_forcelist=[500, 502, 503, 504]
-        )
-        adapter = requests.adapters.HTTPAdapter(max_retries=retry)
-        session.mount('http://', adapter)
-        session.mount('https://', adapter)
+    token_url = "https://accounts.spotify.com/api/token" #Spotify auth 
+    token_data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": SPOTIFY_REDIRECT_URI,
+        "client_id": SPOTIFY_CLIENT_ID,
+        "client_secret": SPOTIFY_CLIENT_SECRET,
+    }
+    response = requests.post(token_url, data=token_data)
 
-        # Exchange code for access token
-        token_url = "https://accounts.spotify.com/api/token"
-        token_data = {
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": SPOTIFY_REDIRECT_URI,
-            "client_id": SPOTIFY_CLIENT_ID,
-            "client_secret": SPOTIFY_CLIENT_SECRET,
-        }
-        
-        # Add timeout and headers
-        token_response = session.post(
-            token_url,
-            data=token_data,
-            timeout=10,
-            headers={'Content-Type': 'application/x-www-form-urlencoded'}
-        )
-        
-        # Check for token errors
-        if token_response.status_code != 200:
-            error = token_response.json().get('error', 'Unknown token error')
-            description = token_response.json().get('error_description', 'No description')
-            return jsonify({
-                "error": f"Spotify token error: {error}",
-                "description": description
-            }), token_response.status_code
+    if response.status_code == 200:
+        access_token = response.json()['access_token']
 
-        access_token = token_response.json()['access_token']
+        top_tracks_url = "https://api.spotify.com/v1/me/top/tracks?limit=10" #Fetch top tracks
+        headers = {"Authorization": f"Bearer {access_token}"}
+        top_tracks_response = requests.get(top_tracks_url, headers=headers)
 
-        # Get top tracks with error handling
-        top_tracks_url = "https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=medium_term"
-        tracks_response = session.get(
-            top_tracks_url,
-            headers={
-                "Authorization": f"Bearer {access_token}",
-                "Content-Type": "application/json"
-            },
-            timeout=10
-        )
+        if top_tracks_response.status_code == 200:
+            top_tracks = top_tracks_response.json()['items']
+            tracks = [
+                {"name": track['name'], "artist": track['artists'][0]['name']}
+                for track in top_tracks
+            ]
 
-        if tracks_response.status_code != 200:
-            error = tracks_response.json().get('error', {}).get('message', 'Unknown tracks error')
-            return jsonify({
-                "error": f"Spotify API error: {error}",
-                "status_code": tracks_response.status_code
-            }), tracks_response.status_code
+            # Store tracks in session instead of calling OpenAI now
+            session['tracks'] = tracks  
+            session.modified = True  # Force session save
 
-        top_tracks = tracks_response.json()['items']
-        tracks = [
-            {"name": track['name'], "artist": track['artists'][0]['name']}
-            for track in top_tracks
-        ]
+            # Redirect to results immediately
+            return redirect("https://personify-ai.onrender.com/results")
 
-        # Session handling with verification
-        session['tracks'] = tracks
-        session.modified = True
-        
-        # Verify session persistence
-        if not session.get('tracks'):
-            return jsonify({"error": "Session storage failed"}), 500
-
-        # Add short delay to ensure cookie persistence
-        time.sleep(0.5)
-        
-        return redirect("https://personify-ai.onrender.com/results")
-
-    except requests.exceptions.Timeout:
-        return jsonify({"error": "Spotify API timeout"}), 504
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Network error: {str(e)}"}), 503
-    except KeyError as e:
-        return jsonify({"error": f"Missing data in response: {str(e)}"}), 500
-    except Exception as e:
-        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
+    return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
 
 
 def generate_track_critique(tracks, max_retries=3, retry_delay=2):
