@@ -104,7 +104,6 @@ const MAX_ATTEMPTS = 3; // You can adjust this value
 const Results = ({ theme }) => {
   const [critique, setCritique] = useState('');
   const [loading, setLoading] = useState(true);
-  const [attempts, setAttempts] = useState(0);  // Track number of attempts
   const [paragraphs, setParagraphs] = useState([]); // Processed paragraphs
   const [currentParaIndex, setCurrentParaIndex] = useState(0);
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
@@ -114,31 +113,34 @@ const Results = ({ theme }) => {
   useEffect(() => {
     const fetchCritique = async (attempt = 1) => {
       try {
+        console.log(`Fetching critique (Attempt ${attempt})`);
         const response = await fetch('https://personify-ai.onrender.com/get-critique', { credentials: 'include' });
+
         if (response.ok) {
           const data = await response.json();
-          setCritique(data.critique);
-          setParagraphs(data.critique.split("\n"));  // Assuming critique is returned as a single string with paragraphs
-        } else {
-          throw new Error('Error fetching critique');
+          if (data.critique.trim()) {
+            setCritique(data.critique);
+            setParagraphs(data.critique.split("\n"));
+            setLoading(false); // Stop loading since we got valid data
+            return;
+          }
         }
+        
+        throw new Error('Invalid or empty critique received');
       } catch (error) {
-        console.error('Error:', error);
+        console.error(`Attempt ${attempt} failed:`, error);
         if (attempt < MAX_ATTEMPTS) {
-          setAttempts(attempt + 1);
-          console.log(`Attempt ${attempt}: Retrying...`);
-          console.log(`Attempts: ${attempts}`);
           setTimeout(() => fetchCritique(attempt + 1), 2000); // Retry after 2 seconds
         } else {
           setCritique('Failed to load critique after multiple attempts.');
+          setLoading(false); // Stop loading after final attempt
         }
-      } finally {
-        setLoading(false);  // Ensure loading state is updated
       }
     };
 
     fetchCritique();
-  }, [attempts]);
+  }, []);
+
   const downloadImage = () => {
     fetch('https://personify-ai.onrender.com/get-image')
       .then((response) => response.blob())
