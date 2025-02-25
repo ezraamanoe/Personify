@@ -144,8 +144,9 @@ def get_image():
     end_critique = textwrap.fill(str(end_critique), width = 40)
     
     # Load font
-    font = ImageFont.truetype("PPNeueMontrealMono-Medium.otf", 70)  # Use a font available on your system
-    fontSub = ImageFont.truetype("PPNeueMontrealMono-Medium.otf", 40)
+    font_path = os.path.join(app.root_path, 'build', 'static', 'fonts', 'PPNeueMontrealMono-Medium.otf')
+    font = ImageFont.truetype(font_path, 70)
+    fontSub = ImageFont.truetype(font_path, 40)
     
     # Draw text onto image
     draw.text((50, 50), text="Personify AI", fill="white", font=font)
