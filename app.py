@@ -1,5 +1,5 @@
 import eventlet
-eventlet.monkey_patch()  # This must be the first import
+eventlet.monkey_patch()  # Eventlet for gunicorn
 
 
 import os
@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
-import io
 import time
 import random
 
@@ -29,15 +28,15 @@ app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
-    PERMANENT_SESSION_LIFETIME=1200  # 20 minute session lifetime
+    PERMANENT_SESSION_LIFETIME=1200  # 20 mins 
 )
 
-# Spotify credentials from .env file
+# Spotify API credentials
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "https://personify-ai.onrender.com/callback")
 
-# Spotify Authentication URL
+# Spotify auth URL
 @app.route('/login')
 def login():
     session.clear()
@@ -51,14 +50,14 @@ def login():
     )
     return redirect(auth_url)
 
-# Handle Spotify Callback and Fetch Top Tracks
+# Callback route to handle Spotify auth and fetch top tracks
 @app.route('/callback')
 def callback():
     code = request.args.get("code")
     if not code:
         return jsonify({"error": "No code received from Spotify"}), 400
 
-    token_url = "https://accounts.spotify.com/api/token" #Spotify auth 
+    token_url = "https://accounts.spotify.com/api/token" #S potify auth 
     token_data = {
         "grant_type": "authorization_code",
         "code": code,
@@ -71,7 +70,7 @@ def callback():
     if response.status_code == 200:
         access_token = response.json()['access_token']
 
-        top_tracks_url = "https://api.spotify.com/v1/me/top/tracks?limit=10" #Fetch top tracks
+        top_tracks_url = "https://api.spotify.com/v1/me/top/tracks?limit=10" # Fetch top tracks
         headers = {"Authorization": f"Bearer {access_token}"}
         top_tracks_response = requests.get(top_tracks_url, headers=headers)
 
@@ -82,22 +81,23 @@ def callback():
                 for track in top_tracks
             ]
 
-            # Store tracks in session instead of calling OpenAI now
+            # Store tracks in session
             session['tracks'] = tracks  
             session.modified = True  # Force session save
 
-            # Redirect to results immediately
+            # Redirect to results page
             return redirect("https://personify-ai.onrender.com/results")
 
     return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
 
 
+# Function to generate track critique using DeepSeek model
 def generate_track_critique(tracks, max_retries=3, retry_delay=2):
     print("asking chatgpt")
-    # Initialize OpenAI (or DeepSeek) client with the correct API key and endpoint
+
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1", timeout=600)
 
-    # Create a message to send to the model, you could use track names or further track details
+    # AI prompt
     track_names = [f"{track['name']} - {track['artist']}" for track in tracks]
     user_message = f"Guess my MBTI and critique my top tracks from Spotify, be very mean, make fun of me. Here are the songs: {', '.join(track_names)}. don't roast the tracks one by one. use ** for bold and * for italic. limit your response to 200 words and list and enumerate the first 10 tracks (song name and artist) as '**Your top 10 tracks:**' after your description. in bold,  write a short but very niche degrading sentence about my music taste as the last sentence, on a seperate line similar to this: 'Your music taste is music-to-stalk-boys-to-jazz-snob-nobody-puts-baby-in-a-corner bad' but dont copy it. don't mention pinterest and don't assume gender. do not use any other symbol characters except for - and . in the last sentence."
 
@@ -115,13 +115,13 @@ def generate_track_critique(tracks, max_retries=3, retry_delay=2):
             # Debug: Print full API response
             print("Full API response:", response)
 
-            # Validate API response structure
+            # Extract critique from response
             if response and response.choices and response.choices[0].message and response.choices[0].message.content:
                 critique = response.choices[0].message.content.strip()
             else:
-                critique = ""  # Fallback if response is empty
+                critique = ""  # Set empty string if response is invalid
 
-            # Check if critique meets the word limit
+            # Check if critique is long enough (sometimes it generates very short responses)
             if len(critique.split()) >= 100:
                 print("Received critique:", critique)
                 return critique
@@ -131,22 +131,23 @@ def generate_track_critique(tracks, max_retries=3, retry_delay=2):
         except Exception as e:
             print(f"Error calling AI: {e}")
 
-        time.sleep(retry_delay + random.uniform(1, 2))
+        time.sleep(retry_delay + random.uniform(1, 2)) 
 
     print("All retries failed. Returning fallback message.")
     return "Your music taste broke the AI. Please reload the page or go back to home."
 
+# Route to get critique
 @app.route('/get-critique')
 def get_critique():
     tracks = session.get('tracks')
     if not tracks:
         return jsonify({"critique": "No tracks available."}), 400  # Return error if no tracks
 
-    # Call AI to generate critique
+    # Call to generate critique
     try:
         critique = generate_track_critique(tracks)
         session['critique'] = critique
-        session.modified = True  # Ensure session is updated
+        session.modified = True  # Save session
         print(f"Stored critique in session: {critique}")
         return jsonify({"critique": critique}), 200
     except Exception as e:
@@ -155,9 +156,11 @@ def get_critique():
 @app.route('/get-image')
 def get_image():
     critique = session.get('critique')
-    formatted_critique = critique.replace("*", "").split("\n")
+    formatted_critique = critique.replace("*", "").split("\n") # Remove * and split by new line
     end_critique = formatted_critique[-1] # Get last element
     tracks = session.get('tracks')
+    
+    # Append tracks to list
     i = 1
     formatted_tracks = []
     for track in tracks:
@@ -167,7 +170,8 @@ def get_image():
         else:
             break
 
-    j = 100
+    # Create image
+    j = 100 # Height offset
     img = Image.new("RGB", (1080, 1920), color="black")
     draw = ImageDraw.Draw(img)
     end_critique = textwrap.fill(str(end_critique), width = 40)
@@ -182,15 +186,14 @@ def get_image():
     draw.text((50, 200 + j), end_critique, fill="#0070f3", font=fontSub)
     
     lines = end_critique.split("\n")
-    _, _, _, line_height = draw.textbbox((0, 0), "a", font=fontSub)  # Calculate height of Critique
+    _, _, _, line_height = draw.textbbox((0, 0), "a", font=fontSub)  # Calculate height of a single line of text
     
-    line_height *= len(lines)
+    line_height *= len(lines) # Total height of all lines
     draw.text((50, 350 + int(line_height) + j), text="Your top tracks:", fill="white", font=font)
     
     x = 550 + j  # Starting y-position
     z = 0    # Tracks total height offset
     
-    # Get height of a single line of text
     _, _, _, line_height = draw.textbbox((0, 0), "a", font=font)  
     
     for track in formatted_tracks:
@@ -202,9 +205,9 @@ def get_image():
         # Update total height offset
         z += line_height * len(track_lines) + 10
     
-    temp_image_path = os.path.join("/tmp", "critique.png")
+    temp_image_path = os.path.join("/tmp", "critique.png") # Save image to temp folder
     img.save(temp_image_path, "PNG")
-    return send_file(temp_image_path, as_attachment=True, download_name="critique.png")
+    return send_file(temp_image_path, as_attachment=True, download_name="critique.png") # Send image as attachment
 
 # Serve the React app
 @app.route('/')

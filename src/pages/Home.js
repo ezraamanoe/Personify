@@ -4,6 +4,7 @@ import { GeistProvider, CssBaseline, Button} from '@geist-ui/core';
 import { Typewriter } from 'react-simple-typewriter';
 import Navbar from '../components/Navbar';
 
+// Redirect to login which handles Spotify auth
 const Home = ({ theme }) => {
   const handleSpotifyAuth = async () => {
     try {

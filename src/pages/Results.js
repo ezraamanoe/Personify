@@ -74,7 +74,7 @@ const processParagraph = (text) => {
   let isItalic = false;
   let buffer = '';
 
-  const flushBuffer = () => {
+  const flushBuffer = () => { 
     if (buffer) {
       styledChars.push(...buffer.split('').map(char => ({ char, bold: isBold, italic: isItalic })));
       buffer = '';
@@ -99,7 +99,7 @@ const processParagraph = (text) => {
   return styledChars;
 };
 
-const MAX_ATTEMPTS = 3; // You can adjust this value
+const MAX_ATTEMPTS = 3;
 
 const Results = ({ theme }) => {
   const [critique, setCritique] = useState('');
@@ -121,7 +121,7 @@ const Results = ({ theme }) => {
           if (data.critique.trim()) {
             setCritique(data.critique);
             setParagraphs(data.critique.split("\n"));
-            setLoading(false); // Stop loading since we got valid data
+            setLoading(false); // Stop loading to start typing critique
             return;
           }
         }
@@ -176,6 +176,7 @@ const Results = ({ theme }) => {
         if (prev < currentParagraph.length) return prev + 1;
         else {
           clearInterval(intervalRef.current);
+          
           // Move to next paragraph after delay
           setTimeout(() => {
             setCurrentParaIndex(prev => prev + 1);
@@ -222,7 +223,7 @@ const Results = ({ theme }) => {
         <Card.Content>
           {paragraphs.slice(0, currentParaIndex).map((para, i) => (
             <p key={i}
-            style={{color: i === paragraphs.length - 1 ? '#0070F3' : 'inherit',}}>
+            style={{color: i === paragraphs.length - 1 ? '#0070F3' : 'inherit',}}> {/* Last paragraph color to blue */}
               {para.map(({ char, bold, italic }, j) => (
                 <span
                   key={j}
@@ -236,9 +237,10 @@ const Results = ({ theme }) => {
               ))}
             </p>
           ))}
+
           {/* Currently typing paragraph */}
           {currentText.length > 0 && (
-            <p style={{color: currentParaIndex === paragraphs.length - 1 ? '#0070F3' : 'inherit',}}>
+            <p style={{color: currentParaIndex === paragraphs.length - 1 ? '#0070F3' : 'inherit',}}> {/* Last paragraph color to blue */}
               {currentText.map(({ char, bold, italic }, j) => (
                 <span
                   key={j}
