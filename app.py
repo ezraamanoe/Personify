@@ -92,25 +92,91 @@ def callback():
     return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
 
 def generate_track_critique(tracks):
+    try:
+        logger.info("Generating track critique...")
+        client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            base_url="https://openrouter.ai/api/v1",
+            timeout=30
+        )
 
-    print("asking chatgpt")
-    # Initialize OpenAI (or DeepSeek) client with the correct API key and endpoint
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1", timeout=30)
+        track_names = [f"{track['name']} - {track['artist']}" for track in tracks]
+        if not track_names:
+            return "No tracks to critique. Your music taste is nonexistent."
 
-    # Create a message to send to the model, you could use track names or further track details
-    track_names = [f"{track['name']} - {track['artist']}" for track in tracks]
-    user_message = f"Guess my MBTI and critique my top tracks from Spotify, be very mean, make fun of me. Here are the songs: {', '.join(track_names)}. don't roast the tracks one by one. use ** for bold and * for italic. limit your response to 200 words and list and enumerate the first 10 tracks (song name and artist) as '**Your top 10 tracks:**' after your description. in bold,  write a short but very niche degrading sentence about my music taste as the last sentence, on a seperate line similar to this: 'Your music taste is music-to-stalk-boys-to-jazz-snob-nobody-puts-baby-in-a-corner bad' but dont copy it. don't mention pinterest and don't assume gender. do not use any other symbol characters except for - and . in the last sentence."
+        user_message = f"Guess my MBTI and critique my top tracks from Spotify, be very mean... [truncated for brevity]"
 
-    # Call OpenAI (or DeepSeek) to generate a critique message
-    response = client.chat.completions.create(
-        model="deepseek/deepseek-chat:free",  # Or any other model you're using
-        messages=[
-            {"role": "system", "content": "You are a very sarcastic gen-z niche music critic who thinks everyone is beneath them and that has a deep obsession with myers-briggs."},
-            {"role": "user", "content": user_message},
+        response = client.chat.completions.create(
+            model="deepseek/deepseek-chat:free",
+            messages=[
+                {"role": "system", "content": "You are a sarcastic..."},
+                {"role": "user", "content": user_message},
+            ]
+        )
+        critique = response.choices[0].message.content.strip()
+        if not critique:
+            raise ValueError("Empty critique generated")
+        
+        return critique
+    except Exception as e:
+        logger.error(f"Error generating critique: {str(e)}")
+        return "Failed to generate critique. Your music taste broke the AI."
+
+@app.route('/callback')
+def callback():
+    try:
+        code = request.args.get("code")
+        if not code:
+            return jsonify({"error": "Authorization code missing"}), 400
+
+        # Token exchange
+        token_response = requests.post(
+            "https://accounts.spotify.com/api/token",
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": SPOTIFY_REDIRECT_URI,
+                "client_id": SPOTIFY_CLIENT_ID,
+                "client_secret": SPOTIFY_CLIENT_SECRET,
+            }
+        )
+        token_response.raise_for_status()  # Raises HTTPError for bad responses
+
+        access_token = token_response.json()['access_token']
+
+        # Fetch top tracks
+        top_tracks_response = requests.get(
+            "https://api.spotify.com/v1/me/top/tracks?limit=10",
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+        top_tracks_response.raise_for_status()
+
+        top_tracks = top_tracks_response.json().get('items', [])
+        if not top_tracks:
+            raise ValueError("No top tracks found")
+
+        tracks = [
+            {"name": track['name'], "artist": track['artists'][0]['name']}
+            for track in top_tracks
         ]
-    )
 
-    return response.choices[0].message.content
+        critique = generate_track_critique(tracks)
+        
+        # Ensure session is properly updated
+        session.update({
+            "tracks": tracks,
+            "critique": critique,
+            "_fresh": True,
+            "_permanent": True
+        })
+        session.modified = True  # Force session save
+
+        return redirect("https://personify-ai.onrender.com/results")
+
+    except requests.HTTPError as e:
+        return jsonify({"error": "Failed to communicate with Spotify"}), 500
+    except Exception as e:
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/get-critique')
 def get_critique():
