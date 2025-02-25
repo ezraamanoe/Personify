@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
+import io
 
 # Load environment variables
 load_dotenv()
@@ -171,10 +172,11 @@ def get_image():
         # Update total height offset
         z += line_height * len(track_lines) + 10
     
-    image_path = os.path.join("build", "static", "images", "critique.png")
-    os.makedirs(os.path.dirname(image_path), exist_ok=True)
-    img.save(image_path, "PNG")
-    return send_file(image_path, as_attachment=True, download_name="critique.png")
+    img_io = io.BytesIO()
+    img.save(img_io, format="PNG")
+    img_io.seek(0)
+
+    return send_file(img_io, mimetype="image/png", as_attachment=True, download_name="critique.png")
 
 # Serve the React app
 @app.route('/')
