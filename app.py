@@ -11,6 +11,8 @@ from openai import OpenAI
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import io
+import time
+import random
 
 # Load environment variables
 load_dotenv()
@@ -89,30 +91,39 @@ def callback():
 
     return jsonify({"error": "Failed to retrieve access token or top tracks"}), 500
 
-def generate_track_critique(tracks):
-    print("Asking OpenAI for critique...")
+
+def generate_track_critique(tracks, max_retries=3, retry_delay=2):
+    print("asking chatgpt")
+    # Initialize OpenAI (or DeepSeek) client with the correct API key and endpoint
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url="https://openrouter.ai/api/v1", timeout=600)
 
+    # Create a message to send to the model, you could use track names or further track details
     track_names = [f"{track['name']} - {track['artist']}" for track in tracks]
-    user_message = f"Guess my MBTI and critique my top tracks from Spotify, Here are the songs: {', '.join(track_names)}. don't roast the tracks one by one. limit your response to 200 words and list and enumerate the first 10 tracks (song name and artist) as '**Your top 10 tracks:**' after your description. in bold,  write a short but very niche degrading sentence about my music taste as the last sentence, on a seperate line similar to this: 'Your music taste is music-to-stalk-boys-to-jazz-snob-nobody-puts-baby-in-a-corner bad' but dont copy it."
-    response = client.chat.completions.create(
-        model="deepseek/deepseek-chat:free",
-        messages=[
-            {"role": "system", "content": "You are a very sarcastic gen-z niche music critic."},
-            {"role": "user", "content": user_message},
-        ]
-    )
+    user_message = f"Guess my MBTI and critique my top tracks from Spotify, be very mean, make fun of me. Here are the songs: {', '.join(track_names)}. don't roast the tracks one by one. use ** for bold and * for italic. limit your response to 200 words and list and enumerate the first 10 tracks (song name and artist) as '**Your top 10 tracks:**' after your description. in bold,  write a short but very niche degrading sentence about my music taste as the last sentence, on a seperate line similar to this: 'Your music taste is music-to-stalk-boys-to-jazz-snob-nobody-puts-baby-in-a-corner bad' but dont copy it. don't mention pinterest and don't assume gender. do not use any other symbol characters except for - and . in the last sentence."
 
-    print("Full OpenAI response:", response)
-    critique_content = response.choices[0].message.content.strip()
+    # Retry loop
+    for attempt in range(max_retries):
+        # Call OpenAI (or DeepSeek) to generate a critique message
+        response = client.chat.completions.create(
+            model="deepseek/deepseek-chat:free",  # Or any other model you're using
+            messages=[
+                {"role": "system", "content": "You are a very sarcastic gen-z niche music critic who thinks everyone is beneath them and that has a deep obsession with myers-briggs."},
+                {"role": "user", "content": user_message},
+            ]
+        )
 
-    if critique_content:
-        session['critique'] = critique_content
-        session.modified = True  # Force session save
-    else:
-        session['critique'] = "No critique content returned. Please try again later."
-    
-    return critique_content
+        # Check if response has valid critique content
+        if response.choices and response.choices[0].message.content.strip():
+            print(response.choices[0].message.content)
+            return response.choices[0].message.content
+        else:
+            # If no valid critique, print a warning and wait before retrying
+            print(f"Retry {attempt + 1} failed. No valid critique returned. Waiting before retrying...")
+            time.sleep(retry_delay + random.uniform(0, 2))  # Add random delay to avoid hitting rate limits
+
+    # After max retries, return a fallback message
+    print("All retries failed. Returning fallback message.")
+    return "Your music taste broke the AI. Please reload the page or go back to home."
 
 @app.route('/get-critique')
 def get_critique():
