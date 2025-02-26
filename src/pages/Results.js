@@ -33,9 +33,13 @@ const Navbar = ({ theme, setTheme }) => {
 
   const toggleDrawer = () => setDrawerVisible(!isDrawerVisible);
 
+  const goHome = () => {
+    window.location.href = 'https://personify-ai.onrender.com'; 
+  };
+
   return (
       <nav className="navbar">
-        <div className="logo">Personify</div>
+        <div className="logo" onClick={goHome}>Personify</div>
         <div className="nav-links">
           <a href="https://github.com/ezraamanoe" target="blank" rel="noopener noreferrer">
             <Button auto size="medium" type="abort"><Github size={14}/>&nbsp;GitHub</Button>
