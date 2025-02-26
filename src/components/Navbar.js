@@ -34,7 +34,9 @@ const Navbar = ({ theme, setTheme }) => {
   return (
     <>
       <nav className="navbar">
-        <div className="logo">Personify</div>
+        <div className="logo">
+          <a href="https://personify-ai.onrender.com">Personify</a>
+        </div>
         <div className="nav-links">
           <a href="https://github.com/ezraamanoe" target="blank" rel="noopener noreferrer">
             <Button auto size="medium" type="abort"><Github size={14}/>&nbsp;GitHub</Button>
