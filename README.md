@@ -70,10 +70,10 @@ $ npm run build
 
 Run using flask development server:
 ```
-flask run # (development server)
+flask run
 ```
 
-Then open http://127.0.0.1/5000 on your browser.
+Then, open http://127.0.0.1/5000 on your browser.
 
 
 
