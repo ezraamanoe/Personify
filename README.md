@@ -57,15 +57,23 @@ SPOTIFY_REDIRECT_URI="http://127.0.0.1:5000/callback"
 OPENAI_API_KEY=your_openai_api_key
 ```
 
-Before running app locally, change all occurences of "https://personify-ai.onrender.com" to "http://127.0.0.1:5000" in Results.js, Home.js, and app.py
+Before running app locally, change all occurences of `https://personify-ai.onrender.com` to `http://127.0.0.1:5000` in Results.js, Home.js, and app.py.
+
+For example, `https://personify-ai.onrender.com/login` becomes `http://127.0.0.1:5000/login`.
 
 Install dependencies and create a build for React:
 
 ```
-npm install
-npm run build
+$ npm install
+$ npm run build
 ```
 
+Run using flask development server:
+```
+flask run # (development server)
+```
+
+Then open http://127.0.0.1/5000 on your browser.
 
 
 
