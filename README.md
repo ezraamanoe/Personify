@@ -11,7 +11,7 @@
   <dl>
     <dt>Spotify Integration:</dt>
     <dd>- Log in and fetch top 10 tracks</dd>
-    <dt>A.I. Integration:</dt>
+    <dt>AI Integration:</dt>
     <dd>- Uses DeepSeek API via OpenRouter to judge music taste</dd>
     <dt>Custom Image Generation:</dt>
     <dd>- Generates a downloadable image with AI generated message and top tracks</dd>
@@ -48,7 +48,7 @@ $ python -m venv venv
 $ source venv/bin/activate  # (Windows: venv\Scripts\activate)
 $ pip install -r requirements.txt
 ```
-In your Spotify for Developers dashboard, register <a>http://127.0.0.1:5000/callback</a> as your redirect URI. Create a `.env ` file in the root directory and add your API keys and credentials.:
+In your Spotify for Developers dashboard, register `http://127.0.0.1:5000/callback` as your redirect URI. Create a `.env ` file in the root directory and add your API keys and credentials.:
 
 ```
 SPOTIFY_CLIENT_ID=your_spotify_client_id
