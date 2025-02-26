@@ -213,7 +213,7 @@ def get_image():
 @app.route('/')
 @app.route('/results')
 def index():
-    return send_from_directory('build', 'index.html', mimetype='image/x-icon')
+    return send_from_directory('build', 'index.html')
 
 @app.route('/logo192.png')
 def logo192():
