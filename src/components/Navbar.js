@@ -26,6 +26,10 @@ const Theme = ({ theme, setTheme }) => {
   );
 };
 
+const goHome = () => {
+  window.location.href = 'https://personify-ai.onrender.com'; 
+};
+
 const Navbar = ({ theme, setTheme }) => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
 
@@ -34,7 +38,7 @@ const Navbar = ({ theme, setTheme }) => {
   return (
     <>
       <nav className="navbar">
-        <div className="logo" href="https://personify-ai.onrender.com">
+        <div className="logo" onClick={goHome}>
           Personify
         </div>
         <div className="nav-links">
