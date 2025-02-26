@@ -213,19 +213,19 @@ def get_image():
 @app.route('/')
 @app.route('/results')
 def index():
-    return send_from_directory('build', 'index.html')
+    return send_from_directory('build', 'index.html', mimetype='image/x-icon')
 
 @app.route('/logo192.png')
 def logo192():
-    return send_from_directory('build', 'logo192.png')
+    return send_from_directory('build', 'logo192.png', mimetype='image/x-icon')
 
 @app.route('/logo512.png')
 def logo512():
-    return send_from_directory('build', 'logo512.png')
+    return send_from_directory('build', 'logo512.png', mimetype='image/x-icon')
 
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory('build', 'favicon.ico')
+    return send_from_directory('build', 'favicon.ico', mimetype='image/x-icon')
 
 if __name__ == '__main__':
     app.run()
