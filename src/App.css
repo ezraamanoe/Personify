@@ -124,6 +124,7 @@ button, .geist-btn {
 .logo {
   font-size: 18px;
   font-weight: 500;
+  text-decoration: none;
 }
 
 .nav-links button {
