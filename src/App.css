@@ -158,10 +158,6 @@ button, .geist-btn {
   font-size: clamp(1rem, 4vw, 32px) !important;
 }
 
-.navbar a{
-  font-size: clamp(6px, 1vw, 12px);
-}
-
 .hamburger {
   display: none;
 }
