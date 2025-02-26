@@ -216,11 +216,11 @@ def index():
     return send_from_directory('build', 'index.html')
 
 @app.route('/logo192.png')
-def favicon():
+def logo192():
     return send_from_directory('build', 'logo192.png')
 
 @app.route('/logo512.png')
-def favicon():
+def logo512():
     return send_from_directory('build', 'logo512.png')
 
 @app.route('/favicon.ico')
