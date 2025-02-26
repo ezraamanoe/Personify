@@ -37,7 +37,7 @@
 Clone the git repository by running:
 
 ```
-$ git clone 
+$ git clone https://github.com/ezraamanoe/Personify.git
 $ cd Personify
 ```
 
