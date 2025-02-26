@@ -57,7 +57,7 @@ SPOTIFY_REDIRECT_URI="http://127.0.0.1:5000/callback"
 OPENAI_API_KEY=your_openai_api_key
 ```
 
-Before running app locally, change all occurences of `https://personify-ai.onrender.com` to `http://127.0.0.1:5000` in Results.js, Home.js, and app.py.
+Before running the app locally, change all occurences of `https://personify-ai.onrender.com` to `http://127.0.0.1:5000` in Results.js, Home.js, and app.py.
 
 For example, `https://personify-ai.onrender.com/login` becomes `http://127.0.0.1:5000/login`.
 
