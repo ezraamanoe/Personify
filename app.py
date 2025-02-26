@@ -215,5 +215,17 @@ def get_image():
 def index():
     return send_from_directory('build', 'index.html')
 
+@app.route('/logo192.png')
+def favicon():
+    return send_from_directory('build', 'logo192.png')
+
+@app.route('/logo512.png')
+def favicon():
+    return send_from_directory('build', 'logo512.png')
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory('build', 'favicon.ico')
+
 if __name__ == '__main__':
     app.run()
